@@ -1,0 +1,6 @@
+rootProject.name = 'datausageapp'
+
+include ':app'
+
+include ':react-native-android-datausage'
+project(':react-native-android-datausage').projectDir = new File(settingsDir, '../node_modules/react-native-android-datausage/android')

@@ -1,0 +1,169 @@
+/**
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
+ * @format
+ * @flow
+ * @lint-ignore-every XPLATJSCOPYRIGHT1
+ */
+
+import React, { Component } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+
+/** Android Datausage React Native module */
+import { NativeModules } from 'react-native';
+
+import DataUsageReport from './DataUsageReport'
+
+export default class App extends Component {
+
+  state = {
+    datausage: [],
+  }
+
+  listDataUsageByApps = () => {
+    if (NativeModules.DataUsageModule) {
+      console.log('Rodando...')
+      // Get data usage of all installed apps in current device
+      // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
+      NativeModules.DataUsageModule.listDataUsageByApps({
+        "startDate": new Date(2019, 1, 1, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
+        "endDate": new Date().getTime()
+      },
+        (err, jsonArrayStr) => {
+          if (!err) {
+            var apps = JSON.parse(jsonArrayStr);
+            // console.log(apps);
+            // for (var i = 0; i < apps.length; i++) {
+            //   var app = apps[i];
+            //   console.log("App name: " + app.name + "\n"
+            //     + "Package name: " + app.packageName + "\n"
+            //     + "Received bytes: " + app.rx + "bytes\n"
+            //     + "Transmitted bytes: " + app.tx + "bytes\n"
+            //     + "Received MB: " + app.rxMb + "\n"
+            //     + "Transmitted MB: " + app.txMb);
+            // }
+            return this.setState({ datausage: apps })
+          }
+          else {
+            console.log('Deu ruim')
+            console.log(err)
+          }
+        })
+    }
+  }
+
+  getDataUsageByApp = () => {
+    if (NativeModules.DataUsageModule) {
+      // Get data usage of specific list of installed apps in current device
+      // Example: get data usage for Facebook, YouTube and WhatsApp.
+      // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later)
+      NativeModules.DataUsageModule.getDataUsageByApp({
+        "packages": ["com.facebook.katana", "com.google.android.youtube", "com.whatsapp", "com.android.chrome"],
+        "startDate": new Date(2019, 1, 1, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
+        "endDate": new Date().getTime()
+      },
+        (err, jsonArrayStr) => {
+          if (!err) {
+            var apps = JSON.parse(jsonArrayStr);
+
+            return this.setState({ datausage: apps })
+          }
+        });
+    }
+  }
+
+  requestPermissions = () => {
+    if (NativeModules.DataUsageModule) {
+      // Check if app has permission to access data usage by apps
+      // This way will not ask for permissions (check only)
+      // If you pass "requestPermission": "true", then app will ask for permissions.
+      NativeModules.DataUsageModule.requestPermissions({ "requestPermission": "false" }, (err, result) => {
+        var permissionObj = JSON.parse(result);
+        if (!permissionObj.permissions) {
+          Alert.alert('Give Permission',
+            'You need to enable data usage access for this app. Please, enable it on the next screen.',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => Actions.pop() },
+              { text: 'Give permission', onPress: () => this.requestPermissions() }
+            ],
+            { cancelable: false });
+        }
+      });
+    }
+  }
+
+  // Exibo o consumo de alguns apps ao iniciar o aplicativo como exemplo
+  async componentDidMount() {
+    await this.getDataUsageByApp()
+  }
+
+  render() {
+    return (
+      <View style={styles.container}>
+
+        <Text style={styles.titulo}>Demonstração do Módulo de Uso de Dados no Android para React Native</Text>
+
+        <View style={styles.containerBotoes}>
+
+          <TouchableOpacity
+            style={styles.botao}
+            onPress={() => this.getDataUsageByApp()}>
+            <Text style={styles.textoBotao}>Uso de Alguns Apps</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.botao2}
+            onPress={() => this.listDataUsageByApps()}>
+            <Text style={styles.textoBotao}>Uso Geral</Text>
+          </TouchableOpacity>
+
+        </View>
+
+        <FlatList
+          style={styles.scrollView}
+          data={this.state.datausage}
+          keyExtractor={app => app.packageName}
+          renderItem={({ item }) => <DataUsageReport app={item}></DataUsageReport>}>
+        </FlatList>
+
+      </View>
+    );
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5FCFF',
+  },
+  containerBotoes: {
+    flexDirection: 'row',
+  },
+  scrollView: {
+    marginTop: 16,
+  },
+  titulo: {
+    fontSize: 24,
+    textAlign: 'center',
+    margin: 10,
+  },
+  botao: {
+    backgroundColor: 'lightgreen',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 100,
+  },
+  botao2: {
+    backgroundColor: 'red',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 100,
+  },
+  textoBotao: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  }
+});
