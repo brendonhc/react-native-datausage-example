@@ -8,68 +8,64 @@
  */
 
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 
 /** Android Datausage React Native module */
 import { NativeModules } from 'react-native';
 
 import DataUsageReport from './DataUsageReport'
 
+const Loading = () => <ActivityIndicator size="large" color="#00ff00" />
+
 export default class App extends Component {
 
   state = {
     datausage: [],
+    loadingVisible: true,
+    loading: <Loading />
   }
 
+  getDataUsageByApp = () => {
+    if (NativeModules.DataUsageModule) {
+      this.setState({ loading: <Loading />})
+      // Get data usage of specific list of installed apps in current device
+      // Example: get data usage for Facebook, YouTube, WhatsApp and Google Chrome.
+      // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later)
+      NativeModules.DataUsageModule.getDataUsageByApp({
+        "packages": ["com.facebook.katana", "com.google.android.youtube", "com.whatsapp", "com.android.chrome"],
+        // "startDate": new Date(2019, 1, 1, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
+        // "endDate": new Date().getTime()
+      },
+        (err, jsonArrayStr) => {
+          if (!err) {
+            var apps = JSON.parse(jsonArrayStr);
+            return this.setState({ datausage: apps, loading: null })
+          }
+        });
+    }
+  }
+
+  // Botão - Uso Geral
   listDataUsageByApps = () => {
+    this.setState({ loading: <Loading />})
     if (NativeModules.DataUsageModule) {
       console.log('Rodando...')
       // Get data usage of all installed apps in current device
       // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
       NativeModules.DataUsageModule.listDataUsageByApps({
-        "startDate": new Date(2019, 1, 1, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
-        "endDate": new Date().getTime()
+        // "startDate": new Date(2019, 1, 1, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
+        // "endDate": new Date().getTime()
       },
         (err, jsonArrayStr) => {
           if (!err) {
             var apps = JSON.parse(jsonArrayStr);
-            // console.log(apps);
-            // for (var i = 0; i < apps.length; i++) {
-            //   var app = apps[i];
-            //   console.log("App name: " + app.name + "\n"
-            //     + "Package name: " + app.packageName + "\n"
-            //     + "Received bytes: " + app.rx + "bytes\n"
-            //     + "Transmitted bytes: " + app.tx + "bytes\n"
-            //     + "Received MB: " + app.rxMb + "\n"
-            //     + "Transmitted MB: " + app.txMb);
-            // }
-            return this.setState({ datausage: apps })
+            return this.setState({ datausage: apps, loading: null })
           }
           else {
             console.log('Deu ruim')
             console.log(err)
           }
         })
-    }
-  }
-
-  getDataUsageByApp = () => {
-    if (NativeModules.DataUsageModule) {
-      // Get data usage of specific list of installed apps in current device
-      // Example: get data usage for Facebook, YouTube and WhatsApp.
-      // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later)
-      NativeModules.DataUsageModule.getDataUsageByApp({
-        "packages": ["com.facebook.katana", "com.google.android.youtube", "com.whatsapp", "com.android.chrome"],
-        "startDate": new Date(2019, 1, 1, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
-        "endDate": new Date().getTime()
-      },
-        (err, jsonArrayStr) => {
-          if (!err) {
-            var apps = JSON.parse(jsonArrayStr);
-
-            return this.setState({ datausage: apps })
-          }
-        });
     }
   }
 
@@ -118,6 +114,10 @@ export default class App extends Component {
             <Text style={styles.textoBotao}>Uso Geral</Text>
           </TouchableOpacity>
 
+        </View>
+
+        <View>
+          {this.state.loading}
         </View>
 
         <FlatList

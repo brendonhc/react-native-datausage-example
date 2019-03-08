@@ -1,10 +1,13 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Image } from 'react-native'
 
 // Componente padrão para exibição do consumo de dados do módulo android-datausage do React Native
 const DataUsageReport = (props) => {
   return (
     <View style={styles.container}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image style={{ resizeMode: 'contain', flex: 1, width: 50, height: 50 }} source={{ uri: `data:image/jpeg;base64,` + props.app.icon }} />
+      </View>
       <View style={styles.linhaDemonstracao}>
         <Text style={styles.labelDemonstracao}>Nome do App: </Text>
         <Text style={styles.dadosDemonstracao}>{props.app.name}</Text>
@@ -28,6 +31,14 @@ const DataUsageReport = (props) => {
       <View style={styles.linhaDemonstracao}>
         <Text style={styles.labelDemonstracao}>MB transmitidos: </Text>
         <Text style={styles.dadosDemonstracao}>{props.app.txMb}</Text>
+      </View>
+      <View style={styles.linhaDemonstracao}>
+        <Text style={styles.labelDemonstracao}>Total: </Text>
+        <Text style={styles.dadosDemonstracao}>{props.app.total}</Text>
+      </View>
+      <View style={styles.linhaDemonstracao}>
+        <Text style={styles.labelDemonstracao}>Total MB: </Text>
+        <Text style={styles.dadosDemonstracao}>{props.app.totalMb}</Text>
       </View>
     </View>
   )
