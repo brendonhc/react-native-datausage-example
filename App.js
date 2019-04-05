@@ -8,7 +8,7 @@
  */
 
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { NetInfo, StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 
 /** Android Datausage React Native module */
 import { NativeModules } from 'react-native';
@@ -17,12 +17,43 @@ import DataUsageReport from './DataUsageReport'
 
 const Loading = () => <ActivityIndicator size="large" color="#00ff00" />
 
+NetInfo.getConnectionInfo().then((connectionInfo) => {
+  console.log('-----------------')
+  console.log(connectionInfo)
+  console.log('-----------------')
+
+  console.log(
+    'Initial, type: ' +
+      connectionInfo.type +
+      ', effectiveType: ' +
+      connectionInfo.effectiveType,
+  );
+});
+function handleFirstConnectivityChange(connectionInfo) {
+  console.log(
+    'First change, type: ' +
+      connectionInfo.type +
+      ', effectiveType: ' +
+      connectionInfo.effectiveType,
+  );
+  NetInfo.removeEventListener(
+    'connectionChange',
+    handleFirstConnectivityChange,
+  );
+}
+NetInfo.addEventListener('connectionChange', handleFirstConnectivityChange);
+
+
 export default class App extends Component {
 
   state = {
     datausage: [],
     loadingVisible: true,
     loading: <Loading />
+  }
+
+  componentDidMount() {
+    console.log('montei')
   }
 
   getDataUsageByApp = () => {
@@ -39,7 +70,8 @@ export default class App extends Component {
         (err, jsonArrayStr) => {
           if (!err) {
             var apps = JSON.parse(jsonArrayStr);
-            return this.setState({ datausage: apps, loading: null })
+            console.log(apps);
+            return this.setState({ datausage: apps, loading: null });
           }
         });
     }
